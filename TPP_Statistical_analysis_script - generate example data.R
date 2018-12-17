@@ -1,5 +1,6 @@
 
 # This code generates realistic example data for the Transparent Psi Project
+library(progress) # to create progress bar
 
 ######################################################################
 #                                                                    #
