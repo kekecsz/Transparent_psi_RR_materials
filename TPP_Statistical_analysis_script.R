@@ -14,6 +14,7 @@ library(ggplot2) # for plotting
 library(emdist) # to calcluate earth mover's distance (EMD)
 library(reshape2) # for melt()
 library(plyr) # for rounding during plotting
+library(lme4) # for glmer
 
 ######################################################################
 #                                                                    #
@@ -27,10 +28,12 @@ library(plyr) # for rounding during plotting
 # https://github.com/kekecsz/Transparent_psi_RR_materials/blob/master/TPP_Statistical_analysis_script%20-%20generate%20example%20data.R
 
 # or use one of the pregenerated example data files, which were used to produce the figures in the manuscript
+
 # data in which M0 was simulated to be true
-# raw_data = read.csv("https://raw.githubusercontent.com/kekecsz/Transparent_psi_RR_materials/master/TPP_example_data_M0.csv")
-# data in which M1 was simulated to be true
-raw_data = read.csv("https://raw.githubusercontent.com/kekecsz/Transparent_psi_RR_materials/master/TPP_example_data_M1.csv")
+raw_data = read.csv("https://raw.githubusercontent.com/kekecsz/Transparent_psi_RR_materials/master/TPP_example_data_M0.csv")
+
+# data in which M1 was simulated to be true, the file is too big, so it is compressed.
+# download the file from https://github.com/kekecsz/Transparent_psi_RR_materials/blob/master/TPP_example_data_M1.zip and open manually
 
 
 ######################################################################
@@ -98,6 +101,21 @@ mode_HDI <- function(scale, density, crit_width = 0.95, n_samples = 1e5){
 
 
 
+# convert logit to probability
+logit2prob <- function(logit){
+  odds <- exp(logit)
+  prob <- odds / (1 + odds)
+  return(prob)
+}
+
+# hypothesis testing inference for Bayesian proportion tests
+
+BF_inference_function = function(BF){
+  if(Inference_threshold_BF_low >= BF) {return("M1")
+  } else if(Inference_threshold_BF_high <= BF) {return("M0")
+  } else {return("Inconclusive")}
+}
+
 ######################################################################
 #                                                                    #
 #                          Data analysis                             #
@@ -113,7 +131,7 @@ erotic_trial_size_per_participant = 18
 M0_prob = 0.5
 
 # interim analysis points (in total number of erotic trials performed)
-when_to_check = c(30060, 37836, 45612, 53406, 61182, 68958, 76734, 84528, 92304, 100080)
+when_to_check = c(37836, 62388, 86958, 111528, 136080)
 
 # thresholds to infer support for M0 (high) or M1 (low)
 Inference_threshold_BF_high = 25
@@ -128,7 +146,7 @@ N_prior = 1560 # number of erotic trials in Bem's experiment 1
 # smallest effect size of interest in the NHST equivalence test 
 minimum_effect_threshold_NHST = 0.01
 # p threshold for the NHST proportion test robustness test
-Inference_threshold_robustness_NHST = 0.005
+Inference_threshold_NHST = 0.005
 
 # in the Bayesian parameter estimation robustness test this will determine the region of practical 
 #equivalence (ROPE) interval. The ROPE is interpreted similarly to SESOI, but not entireli the same. 
@@ -178,24 +196,65 @@ data_nontest_trials_erotic[,"participant_ID"] = droplevels(data_nontest_trials_e
 # This section conducts the primary confirmatory analysis at each stopping point.
 # It also cuts the data short at the point where one of the stopping rules has been met.
 
-BF_table = data.frame(matrix(NA, nrow = 1, ncol = 4))
-names(BF_table) = c("BF_replication", "BF_uniform", "BF_BUJ", "checked_at")
+results_table = data.frame(matrix(NA, nrow = 1, ncol = 7))
+names(results_table) = c("Mixed_mod_CIlb", "Mixed_mod_CIub", "mixed_CI_width","BF_replication", "BF_uniform", "BF_BUJ", "checked_at")
+
+comparisons_Mixed_NHST = 0
 
 for(i in 1:length(when_to_check)){
 
-  # determin currint stopping point and next stopping point
+  # determin current stopping point and next stopping point
   current_stopping_point = when_to_check[i]
   if(i < length(when_to_check)){next_stopping_point = when_to_check[i+1]} else {next_stopping_point = "last"}
   print(paste("analyzing at reaching", current_stopping_point, "erotic trials"))
   
-  # start sampling from the beggining of the full simulated dataset (from the first trial of the first participant) 
+  # sampling starting from the beggining of the full simulated dataset (from the first trial of the first participant) 
   # until reaching the next interim analysis point
   data_BF = data_nontest_trials_erotic[1:current_stopping_point,]
   last_row = data_BF[nrow(data_BF), "row_counter"]
   # number of successes and total N of trials
   successes = sum(as.logical(data_BF[,"sides_match"]))
+  data_BF[,"sides_match_numeric"] = as.numeric(as.logical(data_BF[,"sides_match"]))
   total_N = current_stopping_point
-  BF_table[i, "checked_at"] = current_stopping_point
+  results_table[i, "checked_at"] = current_stopping_point
+  
+  #================================================================#
+  #            Mixed effect logistic regression analysis           #
+  #================================================================#
+  
+  comparisons_Mixed_NHST = comparisons_Mixed_NHST + 2 #because we do two tests at each stop point
+  
+  mod_mixed = glmer(sides_match_numeric ~ 1 + (1|participant_ID), data = data_BF, family = "binomial")
+  estimate_mixed = summary(mod_mixed)$coefficients[1,1]
+  se_mixed = summary(mod_mixed)$coefficients[1,2]
+  
+  results_table[i,"mixed_CI_width"] = 1-(Inference_threshold_NHST/comparisons_Mixed_NHST)
+  wald_ci_mixed_logit <- c(estimate_mixed - se_mixed* qnorm(1-((Inference_threshold_NHST/comparisons_Mixed_NHST)/2)),
+                           estimate_mixed + se_mixed* qnorm(1-((Inference_threshold_NHST/comparisons_Mixed_NHST)/2)))
+  wald_ci_mixed = logit2prob(wald_ci_mixed_logit)
+  
+  results_table[i, "Mixed_mod_CIlb"] = wald_ci_mixed[1]
+  results_table[i, "Mixed_mod_CIub"] = wald_ci_mixed[2]
+  
+
+  
+  
+  ###################
+  #################### NEED TO CHANGE THIS PART BELOW, WAS COPIED FROM POWER ANALYSIS SCRIPT
+  ###################
+  
+  minimum_effect = M0_prob+minimum_effect_threshold_NHST
+  if(results_table[i, "Mixed_mod_CIub"] < minimum_effect){Mixed_NHST_inference = "M0"
+    } else if(results_table[i, "Mixed_mod_CIlb"] > M0_prob){Mixed_NHST_inference = "M1"
+    } else {Mixed_NHST_inference = "Inconclusive"}
+  
+  ###################
+  #################### 
+  ###################
+  
+  
+  
+  
   
   #================================================================#
   #        Calculating Bayes factors using different priors        #
@@ -204,12 +263,16 @@ for(i in 1:length(when_to_check)){
   ### Replication Bayes factor, with the Bem 2011 experiment 1 results providing the prior information
   
   BF_replication <- BF01_beta(y = successes, N = total_N, y_prior = y_prior, N_prior = N_prior, interval = c(0.5,1), null_prob = M0_prob) #numbers higher than 1 support the null
-  BF_table[i, "BF_replication"] = round(BF_replication, 3)
+  results_table[i, "BF_replication"] = round(BF_replication, 3)
+  BF_replication_inference = BF_inference_function(BF_replication)
+  
+  
   ### Bayes factor with uniform prior
   # using a non-informative flat prior distribution with alpha = 1 and beta = 1
   
   BF_uniform <- BF01_beta(y = successes, N = total_N, y_prior = 0, N_prior = 0, interval = c(0.5,1), null_prob = M0_prob) #numbers higher than 1 support the null
-  BF_table[i, "BF_uniform"] = round(BF_uniform, 3)
+  results_table[i, "BF_uniform"] = round(BF_uniform, 3)
+  BF_uniform_inference = BF_inference_function(BF_uniform)
   
   ### Bayes factor with BUJ prior
   # the BUJ prior is calculated from Bem's paper where the prior distribution is defined as a
@@ -225,29 +288,31 @@ for(i in 1:length(when_to_check)){
   # The final equation: exp(d*pi/sqrt(3))/(1+exp(d*pi/sqrt(3)))
   
   BF_BUJ <- BF01_beta(y = successes, N = total_N, y_prior = 6, N_prior = 12, interval = c(0.5,1), null_prob = M0_prob) #numbers higher than 1 support the null
-  BF_table[i, "BF_BUJ"] = round(BF_BUJ, 3)
+  results_table[i, "BF_BUJ"] = round(BF_BUJ, 3)
+  BF_BUJ_inference = BF_inference_function(BF_BUJ)
   
+
   #================================================================#
   #                    Main analysis inference                     #
   #================================================================#
   
-  # determine inference (supported model) based on the Bayes factors calculated above  
-  if(Inference_threshold_BF_low >= max(c(BF_replication, BF_uniform, BF_BUJ))) {
-    inference_BF = "M1"
+    # determine inference (supported model) based on the Bayes factors calculated above  
+  if(all(c(Mixed_NHST_inference, BF_replication_inference, BF_uniform_inference, BF_BUJ_inference) == "M1")) {
+    primary_analysis_inference = "M1"
     which_threshold_passed = as.character(Inference_threshold_BF_low)
-    print(paste("main analysis inference at latest stopping point =", inference_BF))
-    break} else if(Inference_threshold_BF_high <= min(c(BF_replication, BF_uniform, BF_BUJ))) {
-      inference_BF = "M0"
+    print(paste("main analysis inference at latest stopping point =", primary_analysis_inference))
+    break} else if(all(c(Mixed_NHST_inference, BF_replication_inference, BF_uniform_inference, BF_BUJ_inference) == "M0")) {
+      primary_analysis_inference = "M0"
       which_threshold_passed = as.character(Inference_threshold_BF_high)
-      print(paste("main analysis inference at latest stopping point =", inference_BF))
+      print(paste("main analysis inference at latest stopping point =", primary_analysis_inference))
       break} else if((next_stopping_point != "last") & (nrow(data_nontest_trials_erotic) < next_stopping_point)){
-        inference_BF = "Ongoing"
+        primary_analysis_inference = "Ongoing"
         which_threshold_passed = "Ongoing"
-        print(paste("main analysis inference at latest stopping point =", inference_BF))
+        print(paste("main analysis inference at latest stopping point =", primary_analysis_inference))
         break} else {
-          inference_BF = "Inconclusive"
-          which_threshold_passed = paste("either ", Inference_threshold_BF_low, " or ", Inference_threshold_BF_high, sep = "")
-          print(paste("main analysis inference at latest stopping point =", inference_BF))}
+          primary_analysis_inference = "Inconclusive"
+          which_threshold_passed = paste("neither ", Inference_threshold_BF_low, " or ", Inference_threshold_BF_high, sep = "")
+          print(paste("main analysis inference at latest stopping point =", primary_analysis_inference))}
   
 }
 
@@ -335,7 +400,7 @@ success_proportion = successes/total_N
 # total number of erotic trials
 N_erotic_trials
 # statistical inference
-inference_BF
+primary_analysis_inference
 # which threshold was passed
 which_threshold_passed
 
@@ -381,6 +446,7 @@ fig_1_plotdata_full[,"total_N"] = as.numeric(as.character(fig_1_plotdata_full[,"
 fig_1_plotdata_full[,"BF_value"] = as.numeric(as.character(fig_1_plotdata_full[,"BF_value"]))
 
 # final Bayes factors
+BF_table = results_table[,c("BF_replication", "BF_uniform", "BF_BUJ", "checked_at")]
 BF_table_melted = melt(BF_table[nrow(BF_table),], id=c("checked_at"))
 
 figure_1 <- ggplot(fig_1_plotdata_full, aes(y = BF_value, x = total_N, group = BF_type))+
@@ -400,6 +466,7 @@ figure_1 <- ggplot(fig_1_plotdata_full, aes(y = BF_value, x = total_N, group = B
   theme_bw()+
   theme(legend.position="bottom")
   
+
 
 # ggplot returns this warning:
 # "Transformation introduced infinite values in continuous y-axis"
@@ -421,26 +488,15 @@ suppressWarnings(print(figure_1))
 # here we perform both an equality test and an equivalence test to draw statistical inference
 
 
-# equality test
-equality_test_p = prop.test(x = successes, n = total_N, p = M0_prob, alternative = "greater")$p.value
-
 # equivalence test
 equivalence_test_p = prop.test(x = successes, n = total_N,p = M0_prob+minimum_effect_threshold_NHST, alternative = "less")$p.value
 
-# descritives of the frequentist estimate
-pbar = successes/total_N
-SE = sqrt(pbar * (1-pbar)/total_N)
-E = qnorm(.9975) * SE
-proportion_995CI = round(pbar + c(-E , E), 3)
-
-
+# equality test
+equality_test_p = prop.test(x = successes, n = total_N, p = M0_prob, alternative = "greater")$p.value
 
 # making inference decision
-if((Inference_threshold_robustness_NHST > equality_test_p) & 
-   (Inference_threshold_robustness_NHST <= equivalence_test_p)){
-  inference_robustness_NHST = "M1"} else if((Inference_threshold_robustness_NHST > equivalence_test_p) & 
-                                            (Inference_threshold_robustness_NHST <= equality_test_p)){
-    inference_robustness_NHST = "M0" 
+if(Inference_threshold_NHST > equivalence_test_p){inference_robustness_NHST = "M0"
+  } else if(Inference_threshold_NHST > equality_test_p){inference_robustness_NHST = "M1" 
   } else {inference_robustness_NHST = "Inconclusive"}
 
 
@@ -498,7 +554,8 @@ fig_2_segment_data <- data.frame(x1 = c(hdi_result[2], hdi_result[3]), y1 = c(0,
                                  yend=c(approx(x = fig_2_plotdata$x, y = fig_2_plotdata$y, xout = hdi_result[2])$y, approx(x = fig_2_plotdata$x, y = fig_2_plotdata$y, xout = hdi_result[3])$y), 
                                  lty = c("solid"))
 
-fig_2_propCI_segment_data <- data.frame(x1 = c(proportion_995CI[1], proportion_995CI[1], proportion_995CI[2]), y1 = c(-0.04, -0.02, -0.02), xend=c(proportion_995CI[2], proportion_995CI[1], proportion_995CI[2]),
+mixed_NHST_final_CI = as.numeric(results_table[nrow(results_table),c("Mixed_mod_CIlb", "Mixed_mod_CIub")])
+fig_2_propCI_segment_data <- data.frame(x1 = c(mixed_NHST_final_CI[1], mixed_NHST_final_CI[1], mixed_NHST_final_CI[2]), y1 = c(-0.04, -0.02, -0.02), xend=c(mixed_NHST_final_CI[2], mixed_NHST_final_CI[1], mixed_NHST_final_CI[2]),
                                  yend=c(-0.04, -0.06, -0.06), lty = c("solid"))
 
 fig_2_ROPE_equlim_segment_data <- data.frame(x1 = c(ROPE, M0_prob+minimum_effect_threshold_NHST), y1 = c(0, 0), xend=c(ROPE, M0_prob+minimum_effect_threshold_NHST),
@@ -513,7 +570,7 @@ figure_2 = figure_2_pre +
             geom_segment(data = fig_2_propCI_segment_data, aes(x=x1, xend=xend, y=y1, yend=yend))+
             geom_segment(data = fig_2_ROPE_equlim_segment_data, aes(x=x1, xend=xend, y=y1, yend=yend), linetype=c("dashed", "dotted"))+
             annotate("text", x = hdi_result[1], y = 0.1, label = paste("90% HDI: [", round(hdi_result[2], 3), ", ", round(hdi_result[3], 3), "]", sep = ""), size = 4, fontface = 2) +
-            annotate("text", x = mean(c(proportion_995CI[1], proportion_995CI[2])), y = -0.08, label = paste("99.5% CI: [", round(proportion_995CI[1], 3), ", ", round(proportion_995CI[2], 3), "]", sep = ""), size = 4, fontface = 2) +
+            annotate("text", x = mean(c(mixed_NHST_final_CI[1], mixed_NHST_final_CI[2])), y = -0.08, label = paste(results_table[nrow(results_table),"mixed_CI_width"] ," CI: [", round(mixed_NHST_final_CI[1], 3), ", ", round(mixed_NHST_final_CI[2], 3), "]", sep = ""), size = 4, fontface = 2) +
             geom_vline(xintercept = M0_prob, size = 1.3)+
             xlab("successful guess probability")+
             ylab("scaled density")+
@@ -538,9 +595,9 @@ figure_2
 inferences = c(inference_robustness_NHST, inference_robustness_Bayes_Par_Est)
 inference_robustness = if(all(inferences == inferences[1])){inferences[1]} else {"mixed"}
 
-Robust = if(inference_BF == "Inconclusive"){"NA, main inference inconclusive"
-} else if(inference_BF == "Ongoing"){"NA, main analysis ongoing"
-} else if(inference_BF == inference_robustness){"robust"
+Robust = if(primary_analysis_inference == "Inconclusive"){"NA, main inference inconclusive"
+} else if(primary_analysis_inference == "Ongoing"){"NA, main analysis ongoing"
+} else if(primary_analysis_inference == inference_robustness){"robust"
 } else {"not robust"}
 
 
@@ -634,8 +691,3 @@ mean_success_rate_didnotfinishalltrials = mean(success_proportions_empirical_did
 success_rate_didnotfinishalltrials_SE = sd(success_proportions_empirical_didnotfinishalltrials)/sqrt(length(success_proportions_empirical_didnotfinishalltrials))
 success_rate_didnotfinishalltrials_CI_lb = mean_success_rate_didnotfinishalltrials - 1.96*success_rate_didnotfinishalltrials_SE
 success_rate_didnotfinishalltrials_CI_ub = mean_success_rate_didnotfinishalltrials + 1.96*success_rate_didnotfinishalltrials_SE
-
-
-
-
-
