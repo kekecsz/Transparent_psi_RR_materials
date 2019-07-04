@@ -61,7 +61,7 @@ lab_characteristics_sim = data.frame(exp_ID = paste("exp_", 1:10, sep =""),
 
 # Number of simulated sessions (1 regular session contains 36 trials, 18 erotic and 18 non-erotic)
 # generating 10000 simulated participants takes about 4 mins on an i7 6600U 2.6 Ghz CPU 
-num_sim = 3000
+num_sim = 6000
 
 pb <- progress_bar$new(
   format = " simulation progress [:bar] :percent eta: :eta",
