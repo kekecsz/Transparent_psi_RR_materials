@@ -2,8 +2,10 @@
 # This script contains the code that was used to perform the
 # analysis of operational characteristics in the Transparent Psi Project
 # Please read the Statistical analysis section and the Operational characteristics
-# section of the protocol to make sense of the parameters in the code
+# section to make sense of the code
 
+# set output directory if you want to save the results
+# output_directory = "C:\\Example_directory\\"
 
 ######################################################################
 #                                                                    #
@@ -13,7 +15,7 @@
 
 # Set parameters of the simulations below. Keeping the parameters as is will perform the 
 # method 2 operational characteristics analysis mentioned in the protocol.
-# The parameters are settable because this code was used to fine-tune our analysis and sampling plan.
+# The parameters are left changable because this code was used to fine-tune our analysis and sampling plan.
 
 # Note that you can specify several different parameters to try in one run
 # For example if True_prob = c(0.5, 0.51) and BFs_to_try = c(25, 35) the code will perform simulations
@@ -23,47 +25,51 @@
 # 3) True_prob = 0.50 and Inference_threshold_BF_low = 1/35, Inference_threshold_BF_high = 35;
 # 4) True_prob = 0.51 and Inference_threshold_BF_low = 1/35, Inference_threshold_BF_high = 35.
 # The results are output in a table with the results of each of these simulations in separate rows 
-# stored in the output_frame object
+# stored in the output_frame object (found in the bottom of the code)
 
 ### Set the number of simulated samples to analyze
-# we used 50000 simulations for each simulated true population effect size
-# 50000 iterations with 10 stops per simulation runs for 100 minutes on i7 6600U 2.6GHz processor for each different true effec size simulated
+# we used at least 5000 iterations for each simulated true population effect size,
+# but used 10000 iterations for the effect sizes of main interest (0.5, 0.51, and "sample")
+# 10000 iterations with 5 stopping points per simulation runs for about 3-6 hours on i7 6600U 2.6GHz processor for each different true effec size (or other parameter) simulated,
+# depending on the closeness of the simulated effect size to the region where the analysis plan is least sensitive (around 50.5% true guess chance), which results in more analysis,
+# since the more obvious the result is, the higher the chance that data collection will stop at the early stopping points.
 iterations = 10000
 
-### Set Model 0 probability of successful guesses. In our study this is 0.5
+### Set Model 0 probability of successful guesses. In our study this is 0.50
 M0_prob = 0.50
 
 ### True population probability of success to try in the simulation
 # this parameter can be set to a specific true population proportion such as 0.51, or as "sample"
-# if set to "sample" it will sample true effect sizes from a prior distribution calculated from previous results (see below the y_and_N_prior_to_try parameter)
-# setting this to c(0.5, "sample") will perform the method 2 analysis mentioned in ur protocol. With 50000 iterations this would take about 3 hours with an i 7 processor.
-# setting this to c(0.45, 0.48, 0.49, 0.495, seq(0.498, 0.512, 0.001), 0.515, 0.520, 0.530, 0.560) will perform the methid 1 analysis mentioned in the protocol
-# WARNING: performing the method 1 analysis with all effect sizes at once may run for several days on a regular machine
-True_prob = c(0.5, 0.51)
+# if set to "sample" it will sample effect sizes from a prior distribution calculated from previous results (see below the y_and_N_prior_to_try parameter)
+# setting this to c(0.5, "sample") will perform the method 2 analysis mentioned in ur protocol. 
+# setting this to c(0.45, 0.48, 0.49, 0.495, seq(0.498, 0.512, 0.001), 0.515, 0.520, 0.530, 0.560) will perform the method 1 analysis mentioned in the protocol
+# WARNING: performing the method 1 analysis with all effect sizes at once may run for several days on a regular machine. Running it in one chunck is not advised
+# since a crash would result in the loss of all data gathered during the simulation. In this case, set up regular auto-saves of chucks of the output frame.
+True_prob = c(0.5, "sample")
 
 ### Set stopping parameters
-# Minimal and maximal sample sizes. Sample size is given in total number of completed erotic trials.
-# In the previous version of the proposal we proposed 30060 (minimum sample size), 37836, 45612, 53406, 61182, 68958, 76734, 84528, 92304, and a 100080 (maximum sample size)
+# Minimal and maximal sample sizes. 
+# Sample size is given in total number of completed erotic trials (not number of participants)!
 min_trialnumber_to_try = c(37836)
 max_trialnumber_to_try = 136080
 # Number of interim analysis points. Analyses will be performed at equal sample size distances.
-# in our study we use 10 interim analysis points.
+# in our study we use 5 interim analysis points.
 times_to_stop_to_try = 5
 # set BF threshold for inference decisions. Here the upper BF threshold needs to be specified as BF M0 vs M1.
-# for example if this is set to 25, data collection will stop at eaching 25 BF or 1/25 BF.
+# for example if this is set to 25, support for M0 will be infered if BF is over 25, and support for M1 will be infered if BF is below 1/25.
 BFs_to_try = c(25)
 
 ### Give information from previous study
 # this information is used both for the sampling method (method 2 in the protocol) of analysis of 
 # operational characteristics and for calculating replication Bayes factor, and the Bayesian parameter estimation robustness test. 
-# Number of trials where prediction of target was successful and total number of trials needs to be set separated by a comma.
-# Here we use data from Bem's experiment 1, "828, 1560" meaning 828 successes within 1560 trials
+# Number of successful guesses and total number of trials needs to be set separated by a comma.
+# Here we use data from Bem's experiment 1 (Bem, 2011), "828, 1560" meaning 828 successes within 1560 trials
 y_and_N_prior_to_try = "828, 1560" 
 
 ### Set parameters of robustness tests
 # set the types of robustness test to perform after data collection stopped, 
-# the type of test needs to be included in the "" separated by a comma, for example: "NHST_probtest, Bayes_Par_Est, Mixed_NHST"
-# will perform an NHST proportion test, a Bayesian parameter estimation, and a mixed model analysis as robustness test
+# the type of test needs to be included in quotes separated by a comma, for example: "NHST_probtest, Bayes_Par_Est"
+# will perform an NHST proportion test, and a Bayesian parameter estimationas robustness test
 # the proportion test uses the SESIO and p threshold set below, the Bayesian parameter estimation uses the minimum_effect_threshold_Bayes_Par_Est_to_try as ROPE set below
 # if set to NA no robustness test is conducted after data collection stopped
 robustness_test_with = "NHST_probtest, Bayes_Par_Est"
@@ -86,32 +92,33 @@ minimum_effect_threshold_Bayes_Par_Est_to_try = 0.006
 Inference_threshold_robustness_Bayes_Par_Est = 0.05 
 
 ### One- or two-sided test
-# set whether tests are two or one sided and in which direction of one sided. 
+# set whether tests are two or one sided and in which direction if one sided. 
 # Can be set to "two.sided", "less", or "greater". In our study we use "greater".
 alternative_hip_side = "greater"
 
 ### Determine the primary analysis
-# This can be set to "prop_BF_replication", "prop_BF_uniform", "prop_BF_BUJ", "prop_NHST", "Mixed_NHST".
+# This can be set to "prop_BF_replication", "prop_BF_uniform", "prop_BF_BUJ", "prop_NHST", and/or "Mixed_NHST".
 # if multiple analyses are specified, ALL analyses are performed, and support for M0 or M1 is only 
-# declared in the primary analyses, if ALL analyses yield the same conclusion, otherwise. In this case,
-# data collection is stopped at the interim stopping point. If there is no consensus in supporting either
+# declared in the primary analyses if ALL analyses yield the same conclusion. In this case,
+# data collection is stopped at the current interim stopping point. If there is no consensus in supporting either
 # M0 or M1, data collection continuous and all analyses are repeated at the next stopping point. In case of
-# NHST analyses, critical p-value threshold is corrected for multiple comparisons at every interim stopping
-# point to compensate for inflated inferential error rates due to "data peaking".
+# the mixed model logistic regression analysis, critical p-value threshold is corrected for multiple comparisons at every interim stopping
+# point to compensate for inflated inferential error rates due to multiple comparisons.
+# "prop_NHST" is not used in the final analysis plan.
 Primary_analysis = c("prop_BF_replication", "prop_BF_uniform", "prop_BF_BUJ", "Mixed_NHST")
 
 ### Set parameters of NHST test if Primary_analysis is set to "both" or "NHST"
 # if doing NHST as a main analysis what is the p-threshold of accepting the hypotheses
-# the code authomatically adjust for multiple comparisons due to sequential analysis,
-# uses Bonferroni correction, so this does not have to be factored in.  
+# the code automatically adjust for multiple comparisons due to sequential analysis,
+# using Bonferroni correction, so this does not have to be factored in.  
 p_threshold_to_try = 0.005
 
 ### determine the extent of personal differences
-# there may be peronal differences in the probability of successful guesses
+# there may be systematic personal differences in the probability of successful guesses
 # by setting this parameter to 0 (zero), we simulate no personal differences
-# by setting this parameter to higher than zero, the code will determin a "talen" value for each person,
+# by setting this parameter to higher than zero, the code will determin a "talent" value for each person,
 # which is computed by adding a random number with zero mean and this parameter as the SD
-# to True_prob, which is the true mean "talent" (probability of a successful guesses) in the population
+# to True_prob resembling the true mean probability of a successful guesses in the population
 # this is done by the talent_randomizer custom function.
 # setting this to 0.15 will result in 5% of the simulated sample being extremely lucky (75%+ chance of success)
 # and 5% of the population being extremely unlucky (25%- chance of success), and 10% of the population having
@@ -137,9 +144,10 @@ SD_personal_differences_to_try = c(0) #0 to simulate no intercorrelation, or 0.1
 
 
 ### Functions for Bayes factor caclulation using beta prior
-# These functions are required to run the Bayes factor analysis 
-# we thank Richard Morey for his help in developing these functions
-
+# These functions are required to run the Bayes factor analysis
+# The custom code is necessary because we use beta priors, and 
+# the BayesFactor package by default does not have built in beta priors
+# We thank Richard Morey for his help in developing these functions!
 
 fullAlt_beta = Vectorize(function(p, y, N, alpha, beta){
   exp(dbinom(y, N, p, log = TRUE) + dbeta(p, alpha, beta, log = TRUE)) 
@@ -170,7 +178,7 @@ BF01_beta = Vectorize(function(y, N, y_prior, N_prior, interval, null_prob){
 #                       Other supporting functions                   #
 ######################################################################
 
-### Function to find mode
+### Function to find mode in a vector of numbers
 
 Mode <- function(x) {
   ux <- unique(x)
@@ -208,7 +216,7 @@ mode_HDI <- function(scale, density, crit_width = 0.95, n_samples = 1e5){
 }
 
 
-# randomize psi talent if personal differences are simulated
+# randomize ESP talent if personal differences are simulated
 talent_randomizer <- function(True_prob, SD_personal_differences){
   talent = True_prob + rnorm(mean = 0, sd = SD_personal_differences, n = 1)
   if(talent<0.001){talent = 0.001}else if(talent>0.999){talent = 0.999}
@@ -217,6 +225,8 @@ talent_randomizer <- function(True_prob, SD_personal_differences){
 
 
 # convert logit to probability
+# this is used for conversion of the results of the
+# logistic regression to the probability scale
 logit2prob <- function(logit){
   odds <- exp(logit)
   prob <- odds / (1 + odds)
@@ -230,6 +240,7 @@ logit2prob <- function(logit){
 ######################################################################
 
 # function performing sampling, data analysis, determining inference, and robustness
+# this function implements the same analysis plan as described in the paper
 
 simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
                   y_prior, N_prior, alternative_hip_side, 
@@ -267,7 +278,11 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
   ##########################################################
   #         Outputs of the simulation functions            #
   ##########################################################
-
+  
+  # these outputs were used during the development and fine tuning of the code
+  # they are largely redundant now, but may be useful for other researcehrs who would like
+  # to replicate the process through which the final sample size targets were determined
+  
   # BF test outputs
   BF_replication = NA # replication Bayes Factor 
   BF_uniform  = NA # Bayes Factor with uniform prior
@@ -295,14 +310,15 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
   ##########################################################
   #                 Draw simulated sample                  #
   ##########################################################
-  # generate data with True_prob, the simulated data asumes each trial to be independent
-  # see reasoning on this decision in the Treating each trial as independent in data analysis 
-  # subsection in the Additional Methodological Considerations section of the protocol
-  # also, see demonstration that participant effects (clustering) does not affect the results of this analysis
-  # via this R demo: https://github.com/kekecsz/Transparent_Psi_Project_scripts/blob/master/Demonstrate%20insensitivity%20to%20clustering%20of%20the%20effect.R
-  
-  # only generate personal differences if True_prob != 0.5
-  
+  # generate data with True_prob as the mean guess chance in the population.
+  # if True_prob != 0.5 and SD_personal_differences != 0, data will simulate personal differences
+  # in probability to guess correctly. In every other case, probability to guess correctly is
+  # simulated to be homogeneoues in the population for all trials (no personal differences).
+  # in some cases it might make sense to generate personal differences even if the the average guess chance
+  # in the population is exactly 50%. We did not take into consideration this possibility in the code.
+  # the main reason for this is that generating a personal guess chance for each participant increases
+  # processing needs. But this can be implemented in this code by deleting the True_prob != 0.5 conditions
+
   if(any(robustness_test_types == "Mixed_NHST")|any(Primary_analysis == "Mixed_NHST")){
     if((SD_personal_differences != 0) & (True_prob != 0.5)){
       data_all_M1 <- as.vector(replicate(mround(max_num_trials, base = 18)/18, rbinom(18, size = 1, prob=talent_randomizer(True_prob = True_prob, SD_personal_differences = SD_personal_differences))))
@@ -323,22 +339,24 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
 
     
     ##########################################################
-    # Bayes Factor test as a main/primary hypothesis testing #
+    #                    Primary analysis                    #
     ##########################################################
     
-    ### Analysis on the dataset in which M1 is true
-    # compute Bayes factor on the simulated data where M1 is true
-    # Bayes factor is computed at the segments of the dataset specified by when_to_check. 
-    # if the BF thresholds for stopping are reached (set in the parameters Inference_threshold_BF_low and Inference_threshold_BF_high), the loop stops
-
+  # See details of the analysis plan in the paper
+  
+  # this is a counter to count the number of tests conducted using the NHST analyses
+  # due to sequential testing. This is used to adjust the p-value threshold 
+  # for the number of comparions made
   comparisons_prop_NHST = 0
   comparisons_Mixed_NHST = 0
   
+  # this for loop repeates the same analyses until one of the predefined stopping points is reached
     for(i in when_to_check){
       
-      # dataset used in the Bayes factor calculation, it includes data from the beggining the
-      # data_all_M1 full simulated dataset, the size of the sample it contains increases in the
+      # dataset used in the Primary analysis, it includes data from data_all_M1 
+      # which is the full simulated dataset, the size of the sample it contains increases in the
       # loop until the BF threshold or the maxumum sample size is reached 
+      
       data_BF = data_all_M1[1:i]
       data_dataframe = data_all_M1_dataframe[1:i,]
       
@@ -346,7 +364,9 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
       successes = sum(data_BF)
       total_N = length(data_BF)
       
+      # vector which will contain all primary analysis inferences
       Primary_inferences = NA
+      # counter counting the number of statistical inferences made in the primary analysis
       Primary_inferences_num = 0
       
       if(any(Primary_analysis == "prop_BF_replication")){
@@ -397,6 +417,10 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
       
 
       if(any(Primary_analysis == "prop_NHST")){
+      ### simple proportion test NHST analysis
+        # this is not used in our final analysis plan, so this can be regarded as a code fossile
+        # but could be used is someone wanted to include this test as well as a primary inference method
+        
         Primary_inferences_num = Primary_inferences_num + 1      
         comparisons_prop_NHST = comparisons_prop_NHST + 2 #because we do two tests at each stop point
         
@@ -426,6 +450,8 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
       }
         
         if(any(Primary_analysis == "Mixed_NHST")){
+          ### mixed model logistic regression analysis
+          
           Primary_inferences_num = Primary_inferences_num + 1      
           comparisons_Mixed_NHST = comparisons_Mixed_NHST + 2 #because we do two tests at each stop point
           
@@ -466,6 +492,10 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
         #                    Main analysis inference                     #
         #================================================================#
         
+      ## Determine final inference of the primary analysis based on the inferences
+      # made by the primary analyses separately
+      # also stops the loop if a predefined stopping point is reached
+      
         if(all(Primary_inferences == "M1")){Final_primary_inference = "M1"
         break
         } else if(all(Primary_inferences == "M0")){Final_primary_inference = "M0"
@@ -578,6 +608,10 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
       #   Robustness test of using mixed models to account for personal differences        #
       #====================================================================================#
       
+      ### Analysis using a mixed model logistic regression
+      # this is not used in the final analysis plan, since this was moved to the primary analysis
+      # so this can be regarded as a code fossile
+      
       if(any(robustness_test_types == "Mixed_NHST")){
         
         
@@ -634,7 +668,8 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
   ##################################################
   #           Output simulation results            #
   ##################################################
-  
+ 
+      # Outputs of the function 
     output <- c(BF_replication,
                 BF_uniform,
                 BF_BUJ,
@@ -661,6 +696,13 @@ simul <- function(M0_prob, True_prob, True_prob_samp, max_num_trials,
 #                           Load packages                            #
 #                                                                    #
 ######################################################################
+
+######################################################################
+#                        Parallelization                             #
+######################################################################
+
+# The analysis is parallelized so it can run on multiple cores at the same time
+# this speeds up the code substantially
 
 library(parallel) # for parallel processing on multiple cores
 cl <- makeCluster(detectCores()) # set up working clusters (run task on all but one processor cores)
@@ -778,6 +820,7 @@ for(i in 1:nrow(output_frame)){
   ######################################################################
   
   # make objects available for working clusters (all cores)
+  # this is needed for the parallelization
   clusterExport(cl,c(
     "fullAlt_beta",
     "normalize_beta",
@@ -884,11 +927,20 @@ for(i in 1:nrow(output_frame)){
 
 }
 
-#stop the cluster
+# stop the cluster
+# end of parralelized processing
 stopCluster(cl)
 
 
 
 
 ### inspect results in a table
-output_frame
+output_frame 
+
+
+
+end_time <- Sys.time() #system time when task was finished
+end_time - start_time # total running time
+
+# Results can be saved using this code if needed, this code includes the system time in the name of the output file
+# write.csv(output_frame, paste(output_directory, "sim_out_", substr(as.character(Sys.time()), 1, 13), ".csv", sep = ""), row.names = F)
