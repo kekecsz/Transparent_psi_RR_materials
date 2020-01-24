@@ -180,7 +180,7 @@ raw_data[,"sides_match"] = as.factor(tolower(as.logical(raw_data[,"sides_match"]
 raw_data[,"participant_ID"] = as.factor(raw_data[,"participant_ID"])
 
 # sessions conducted with the test accounts or without lab_IDs are excluded
-lab_IDs_to_exclude <- c("", "18155ef201564afbb81f6a8b74aa9a033eac51ec6595510eca9606938ffaced3", "ece83ceb8611d1926746e5bb3597ed1e8cb5d336521331b31961d5c0348883cf")
+lab_IDs_to_exclude <- c("", "18155ef201564afbb81f6a8b74aa9a033eac51ec6595510eca9606938ffaced3", "ece83ceb8611d1926746e5bb3597ed1e8cb5d336521331b31961d5c0348883cf", "bd2dd15be34863e9efb77fbddfe744382a9c62c6a497e8bcf3097a47905b905b", "fff9cb9dcc3ac735fc25a59f424e98278a731c23ccd57276d292996c2ba7784f")
 data_nontest <- raw_data[!(raw_data[,"laboratory_ID_code"] %in% lab_IDs_to_exclude), ]
 
 # add a row_counter, which will be useful to distinguish data coming in after the stopping rule was met.
@@ -707,3 +707,8 @@ mean_success_rate_didnotfinishalltrials = mean(success_proportions_empirical_did
 success_rate_didnotfinishalltrials_SE = sd(success_proportions_empirical_didnotfinishalltrials)/sqrt(length(success_proportions_empirical_didnotfinishalltrials))
 success_rate_didnotfinishalltrials_CI_lb = mean_success_rate_didnotfinishalltrials - 1.96*success_rate_didnotfinishalltrials_SE
 success_rate_didnotfinishalltrials_CI_ub = mean_success_rate_didnotfinishalltrials + 1.96*success_rate_didnotfinishalltrials_SE
+
+
+
+
+
