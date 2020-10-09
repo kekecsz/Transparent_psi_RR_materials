@@ -383,11 +383,11 @@ first_rows_of_each_participant[,"SS_Q_average_score"] = apply(cbind(first_rows_o
 SS_Q_mean = mean(first_rows_of_each_participant[,"SS_Q_average_score"])
 SS_Q_SD = sd(first_rows_of_each_participant[,"SS_Q_average_score"])
 
-N_guessed_side_left = sum(first_rows_of_each_participant[,"guessed_side"] == "left")
-guessed_side_left_proportion = N_guessed_side_left/N_participants_data_included_in_main_analysis
+N_guessed_side_left = sum(data_BF[,"guessed_side"] == "left")
+guessed_side_left_proportion = N_guessed_side_left/length(data_BF[,"guessed_side"] == "left" | data_BF[,"guessed_side"] == "right")
 
-N_target_side_left = sum(first_rows_of_each_participant[,"target_side"] == "left")
-target_side_left_proportion = N_target_side_left/N_participants_data_included_in_main_analysis
+N_target_side_left = sum(data_BF[,"target_side"] == "left")
+target_side_left_proportion = N_target_side_left/length(data_BF[,"target_side"] == "left" | data_BF[,"target_side"] == "right")
 
 data_nontest_trials[, "participant_ID"] = droplevels(data_nontest_trials[, "participant_ID"])
 data_nontest_trials_analyzedparticipants = data_nontest_trials[data_nontest_trials[, "participant_ID"] %in% unique(data_BF[, "participant_ID"]),]
