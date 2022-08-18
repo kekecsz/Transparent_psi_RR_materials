@@ -519,7 +519,7 @@ figure_1 <- ggplot(fig_1_plotdata_full, aes(y = BF_value, x = total_N, group = B
   annotate("rect", xmin=-Inf, xmax=Inf, ymin=c(Inference_threshold_BF_high), ymax=c(Inf), alpha = 0.4, fill=c("grey60"))+
   annotate("rect", xmin=-Inf, xmax=Inf, ymin=c(Inference_threshold_BF_low), ymax=c(Inference_threshold_BF_high), alpha = 0.2, fill=c("grey80"))+
   annotate("rect", xmin=-Inf, xmax=Inf, ymin=c(0), ymax=c(Inference_threshold_BF_low), alpha = 0.4, fill=c("grey60"))+
-  scale_y_log10(limits = fig_1_y_axis_limits, breaks = fig_1_y_axis_breaks)+
+  scale_y_log10(limits = fig_1_y_axis_limits, breaks = fig_1_y_axis_breaks, labels = as.character(fig_1_y_axis_breaks))+
   scale_x_continuous(breaks = c(0, round_any(BF_table[1,"checked_at"]*1/3, 1000), round_any(BF_table[1,"checked_at"]*2/3, 1000), BF_table[,"checked_at"]))+
   geom_hline(yintercept = c(Inference_threshold_BF_low, Inference_threshold_BF_high), linetype = "dashed")+
   geom_vline(xintercept = BF_table[,"checked_at"], linetype = "dotted")+
