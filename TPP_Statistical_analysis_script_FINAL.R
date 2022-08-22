@@ -6,9 +6,9 @@
 ######################################################################
 
 # This script contains the statistical analysis that was used for
-# analyzing the data in the Transparent Psi Project
+# analyzing the data in the Transparent Psi Project.
 # Please read the Statistical analysis section in the manuscript 
-# to make sense of the code
+# to make sense of the code.
 
 ######################################################################
 #                                                                    #
@@ -16,9 +16,9 @@
 #                                                                    #
 ######################################################################
 
-library(HDInterval) # needed to calcluate HDI credible intervals in the Bayesian parameter estimation robustness test
+library(HDInterval) # needed to calculate HDI credible intervals in the Bayesian parameter estimation robustness test
 library(ggplot2) # for plotting
-library(emdist) # to calcluate earth mover's distance (EMD)
+library(emdist) # to calculate earth mover's distance (EMD)
 library(reshape2) # for melt()
 library(plyr) # for rounding during plotting
 library(lme4) # for glmer
@@ -30,13 +30,13 @@ library(tidyverse) # for some tidy code
 #                                                                    #
 ######################################################################
 
-# to use the raw data from the original source (GitHub), download all files
+# To use the raw data from the original source (GitHub), download all files
 # from this repository https://github.com/kekecsz/transparent-psi-results/tree/master/live_data
-# to a local folder, and provide the path in the line below
-# the file path should be saved in the data_folder object
+# to a local folder, and provide the path in the line below.
+# The file path should be saved in the data_folder object.
 
 data_folder <- "C:\\Users\\User\\Documents\\transparent-psi-results-master\\live_data\\"
-
+# With the following passages, the eleven data files downloaded are organised into a single dataset.
 data_file_list <- list.files(data_folder)
 
 list_of__s = lapply(strsplit(data_file_list, ''), function(x) which(x == '_'))
@@ -65,8 +65,8 @@ for(i in 1:length(data_file_list_ordered_fullpath)){
 raw_data <- do.call("rbind", target_data_pre_list)
 
 
-# Alternatively, you can download the combined raw data file directly from OSF
-# this produces the same results, although direct download from OSF
+# Alternatively, you can download the combined raw data file directly from OSF.
+# This produces the same results, although direct download from OSF
 # can take a few seconds, be patient.
 # raw_data <- read.csv("https://osf.io/24qkr/download")
 
@@ -80,11 +80,11 @@ raw_data <- do.call("rbind", target_data_pre_list)
 #                  Bayes factor calculation functions                #
 ######################################################################
 
-### Functions for Bayes factor caclulation using beta prior
+### Functions for Bayes factor calculation using beta prior
 
-# These functions are required to run the Bayes factor analysis
+# These functions are required to run the Bayes factor analysis.
 # The custom code is necessary because we use beta priors, and 
-# the BayesFactor package by default does not have built in beta priors
+# the BayesFactor package by default does not have built-in beta priors.
 # We thank Richard Morey for his help in developing these functions!
 
 fullAlt_beta = Vectorize(function(p, y, N, alpha, beta){
@@ -116,8 +116,8 @@ BF01_beta = Vectorize(function(y, N, y_prior, N_prior, interval, null_prob){
 ######################################################################
 
 ### Function calculating the highest density interval using sampling
-# We use hdi() from the library(HDInterval)
-# this function is needed for the Bayesian parameter estimation robustness test
+# We use hdi() from the library(HDInterval).
+# This function is needed for the Bayesian parameter estimation robustness test.
 
 mode_HDI <- function(scale, density, crit_width = 0.95, n_samples = 1e5){
   samp <- sample(x = scale, size = n_samples, replace = TRUE, prob = density)
@@ -136,9 +136,9 @@ mode_HDI <- function(scale, density, crit_width = 0.95, n_samples = 1e5){
 
 
 
-# convert logit to probability
-# this is used for conversion of the results of the
-# logistic regression to the probability scale
+# Convert logit to probability
+# This is used for conversion of the results of the
+# logistic regression to the probability scale.
 logit2prob <- function(logit){
   odds <- exp(logit)
   prob <- odds / (1 + odds)
@@ -158,7 +158,7 @@ BF_inference_function = function(BF){
 #                                                                    #
 ######################################################################
 ### Analysis parameters
-# these are the analysis parameters specified in our protocol
+# These are the analysis parameters specified in our protocol.
 
 # number of erotic trials performed per participant
 erotic_trial_size_per_participant = 18
@@ -173,33 +173,33 @@ when_to_check = c(37836, 62388, 86958, 111528, 136080)
 Inference_threshold_BF_high = 25
 Inference_threshold_BF_low = 1/Inference_threshold_BF_high
 
-# this information is used both for calculating replication Bayes factor, and the Bayesian parameter estimation robustness test. 
-# Here we use data from Bem's experiment 1, 828 successes within 1560 erotic trials
+# This information is used both for calculating replication Bayes factor, and the Bayesian parameter estimation robustness test. 
+# Here we use data from Bem's experiment 1, 828 successes within 1560 erotic trials.
 y_prior = 828 #number of successes in erotic trials in Bem's experiment 1
 N_prior = 1560 # number of erotic trials in Bem's experiment 1
 
 # smallest effect size of interest in the NHST equivalence tests 
-# these are used in both the mixed model analysis in the primary analysis
-# and the proportion test in the robustness analysis
+# These are used in both the mixed model analysis in the primary analysis
+# and the proportion test in the robustness analysis.
 minimum_effect_threshold_NHST = 0.01
 # p threshold for the NHST tests
-# these are used in both the mixed model analysis in the primary analysis
+# These are used in both the mixed model analysis in the primary analysis
 # and the proportion test in the robustness analysis
 # although, in the primary analysis this is adjusted for multiple testing
-# using Bonferroni's correction
+# using Bonferroni's correction.
 Inference_threshold_NHST = 0.005
 
-# in the Bayesian parameter estimation robustness test this will determine the region of practical 
-#equivalence (ROPE) interval. The ROPE is interpreted similarly to SESOI, but not entireli the same. 
+# In the Bayesian parameter estimation robustness test this will determine the region of practical 
+# equivalence (ROPE) interval. The ROPE is interpreted similarly to SESOI, but not entirely in the same way. 
 # See Kruschke, J. K., & Liddell, T. M. (2017). The Bayesian New Statistics: Hypothesis testing, 
 # estimation, meta-analysis, and power analysis from a Bayesian perspective. 
 # Psychonomic Bulletin & Review, 1-29. 
 minimum_effect_threshold_Bayes_Par_Est = 0.006
 
 # This threshold is used to set the HDI width to check against the ROPE in the Bayesian parameter 
-# estimation robustness test, if this parameter is set to 0.05, it means that we would 
+# estimation robustness test: if this parameter is set to 0.05, it means that we would 
 # expect that 95% of the probability mass would be within the ROPE to support M0, or outside of it
-# to support M1
+# to support M1.
 Inference_threshold_robustness_Bayes_Par_Est = 0.05 
 
 ######################################################################
@@ -211,18 +211,18 @@ Inference_threshold_robustness_Bayes_Par_Est = 0.05
 raw_data[,"sides_match"] = as.factor(tolower(as.logical(raw_data[,"sides_match"])))
 raw_data[,"participant_ID"] = as.factor(raw_data[,"participant_ID"])
 
-# sessions conducted with the test accounts or without lab_IDs are excluded (these IDs were preregistered to be excluded)
+# Sessions conducted with the test accounts or without lab_IDs are excluded (these IDs were preregistered to be excluded).
 lab_IDs_to_exclude <- c("", "18155ef201564afbb81f6a8b74aa9a033eac51ec6595510eca9606938ffaced3", "ece83ceb8611d1926746e5bb3597ed1e8cb5d336521331b31961d5c0348883cf", "bd2dd15be34863e9efb77fbddfe744382a9c62c6a497e8bcf3097a47905b905b", "fff9cb9dcc3ac735fc25a59f424e98278a731c23ccd57276d292996c2ba7784f")
 data_nontest <- raw_data[!(raw_data[,"laboratory_ID_code"] %in% lab_IDs_to_exclude), ]
 
-# add a row_counter, which will be useful to distinguish data coming in after the stopping rule was met.
+# Add a row_counter, which will be useful to distinguish data coming in after the stopping rule was met.
 data_nontest[, "row_counter"] = 1:nrow(data_nontest)
 
-# extract data from erotic trials 
+# Extract data from erotic trials.
 data_nontest_trials = data_nontest[!is.na(data_nontest[, "trial_number"]),]
 data_nontest_trials_erotic = data_nontest_trials[data_nontest_trials[, "reward_type"] == "erotic", ]
 
-# drop unused factor levels
+# Drop unused factor levels.
 data_nontest_trials_erotic[,"participant_ID"] = droplevels(data_nontest_trials_erotic[,"participant_ID"])
 
 
@@ -240,19 +240,19 @@ data_nontest_trials_erotic[,"participant_ID"] = droplevels(data_nontest_trials_e
 results_table = data.frame(matrix(NA, nrow = 1, ncol = 7))
 names(results_table) = c("Mixed_mod_CIlb", "Mixed_mod_CIub", "mixed_CI_width","BF_replication", "BF_uniform", "BF_BUJ", "checked_at")
 
-# this is a counter to count the number of tests conducted using the mixed model
+# This is a counter to count the number of tests conducted using the mixed model
 # due to sequential testing. This is used to adjust the p-value threshold 
-# for the number of comparions made
+# for the number of comparisons made.
 comparisons_Mixed_NHST = 0
 
 for(i in 1:length(when_to_check)){
   
-  # determin current stopping point and next stopping point
+  # Determine current stopping point and next stopping point.
   current_stopping_point = when_to_check[i]
   if(i < length(when_to_check)){next_stopping_point = when_to_check[i+1]} else {next_stopping_point = "last"}
   print(paste("analyzing at reaching", current_stopping_point, "erotic trials"))
   
-  # sampling starting from the beggining of the full simulated dataset (from the first trial of the first participant) 
+  # sampling starting from the beginning of the full simulated dataset (from the first trial of the first participant) 
   # until reaching the next interim analysis point
   data_BF = data_nontest_trials_erotic[1:current_stopping_point,]
   last_row = data_BF[nrow(data_BF), "row_counter"]
@@ -266,16 +266,16 @@ for(i in 1:length(when_to_check)){
   #            Mixed effect logistic regression analysis           #
   #================================================================#
   
-  # advance the counter to see how much adjustment needs to be made to the
-  # NHST inference threshold due to multiple testing
-  comparisons_Mixed_NHST = comparisons_Mixed_NHST + 2 # we add 2 at each sequential stopping point because we do two tests at each stop point, one for M0 and one for M1
+  # Advance the counter to see how much adjustment needs to be made to the
+  # NHST inference threshold due to multiple testing.
+  comparisons_Mixed_NHST = comparisons_Mixed_NHST + 2 # We add 2 at each sequential stopping point because we do two tests at each stop point, one for M0 and one for M1.
   
-  # build mixed logistic regression model and extract model coefficient and SE
+  # Build mixed logistic regression model and extract model coefficient and SE.
   mod_mixed = glmer(sides_match_numeric ~ 1 + (1|participant_ID), data = data_BF, family = "binomial")
   estimate_mixed = summary(mod_mixed)$coefficients[1,1]
   se_mixed = summary(mod_mixed)$coefficients[1,2]
   
-  # compute confidence interval on the probability scale, and save into results_table
+  # Compute confidence interval on the probability scale, and save into results_table.
   results_table[i,"mixed_CI_width"] = 1-(Inference_threshold_NHST/comparisons_Mixed_NHST)
   wald_ci_mixed_logit <- c(estimate_mixed - se_mixed* qnorm(1-((Inference_threshold_NHST/comparisons_Mixed_NHST)/2)),
                            estimate_mixed + se_mixed* qnorm(1-((Inference_threshold_NHST/comparisons_Mixed_NHST)/2)))
@@ -285,7 +285,7 @@ for(i in 1:length(when_to_check)){
   results_table[i, "Mixed_mod_CIub"] = wald_ci_mixed[2]
   
   
-  # Statistical inference based on the results of the mixed model analysis  
+  # statistical inference based on the results of the mixed model analysis  
   
   minimum_effect = M0_prob+minimum_effect_threshold_NHST
   if(results_table[i, "Mixed_mod_CIub"] < minimum_effect){Mixed_NHST_inference = "M0"
@@ -301,9 +301,9 @@ for(i in 1:length(when_to_check)){
   #        Calculating Bayes factors using different priors        #
   #================================================================#
   
-  # as determined in the analysis plan, three different prior distributions are used for M1
-  # to ensure the robustness of the statistical inference to different analytical choices
-  # the same 
+  # Three different prior distributions are used for M1 to ensure 
+  # the robustness of the statistical inference to different 
+  # analytical choices.
   
   ### Replication Bayes factor, with the Bem 2011 experiment 1 results providing the prior information
   
@@ -320,9 +320,9 @@ for(i in 1:length(when_to_check)){
   BF_uniform_inference = BF_inference_function(BF_uniform)
   
   ### Bayes factor with BUJ prior
-  # the BUJ prior is calculated from Bem's paper where the prior distribution is defined as a
-  # normal distribution with a mean at 0 and 90th percentele is at medium effect size d = 0.5 
-  # (we asume that this is one-tailed). Source: Bem, D. J., Utts, J., & Johnson, W. O. (2011). 
+  # The BUJ prior is calculated from Bem's paper where the prior distribution is defined as a
+  # normal distribution with a mean at 0 and 90th percentile is at medium effect size d = 0.5 
+  # (we assume that this is one-tailed). Source: Bem, D. J., Utts, J., & Johnson, W. O. (2011). 
   # Must psychologists change the way they analyze their data? Journal of Personality and Social Psychology, 101(4), 716-719.
   # We simulate this in this binomial framework with a one-tailed beta distribution with alpha = 7 and beta = 7.
   # This distribution has 90% of its probability mass under p = 0.712, which we determined 
@@ -341,8 +341,8 @@ for(i in 1:length(when_to_check)){
   #                    Main analysis inference                     #
   #================================================================#
   
-  # determine final inference (supported model) based on the inferences drawn
-  # from the mixed model and the Bayes factors 
+  # Determine final inference (supported model) based on the inferences drawn
+  # from the mixed model and the Bayes factors. 
   if(all(c(Mixed_NHST_inference, BF_replication_inference, BF_uniform_inference, BF_BUJ_inference) == "M1")) {
     primary_analysis_inference = "M1"
     which_threshold_passed = as.character(Inference_threshold_BF_low)
@@ -367,8 +367,8 @@ for(i in 1:length(when_to_check)){
 ##################################################
 
 # The code in this segment calculates all sample and study characteristics 
-# mentioned in the results section of the manuscript
-# the objects are named to clearly indicate which statistic is calculated
+# mentioned in the results section of the manuscript.
+# The objects are named to clearly indicate which statistic is calculated.
 
 data_nontest_untilstudystop = data_nontest[1:which(data_nontest[, "row_counter"] == last_row),]
 data_nontest_trials_erotic_untilstudystop = data_nontest_trials_erotic[1:which(data_nontest_trials_erotic[, "row_counter"] == last_row),]
@@ -408,13 +408,13 @@ sex_men_proportion = N_sex_men/N_participants_data_included_in_main_analysis
 
 # In the ESP_Q_item_1 variable, one of the responses is Don’t know, but the apostrophe was encoded as multiple characters.
 # I have to manually copy this text into the code to recode it in the line below, otherwise it will treat the Don’t know answers as missing data.
-# This line is not crucial for the confimrmatory analysis.
+# This line is not crucial for the confirmatory analysis.
 first_rows_of_each_participant[,"ESP_Q_item_1_num"] = as.numeric(ordered(factor(first_rows_of_each_participant[,"ESP_Q_item_1"]), levels = c("Definitely Does not", "Probably does not", "Donâ€™t know", "Probably does", "Definitely does")))
 ESP_Q_mean = mean(na.omit(first_rows_of_each_participant[,"ESP_Q_item_1_num"]))
 ESP_Q_SD = sd(na.omit(first_rows_of_each_participant[,"ESP_Q_item_1_num"]))
 
 first_rows_of_each_participant[,"SS_Q_item_1_num"] = as.numeric(ordered(factor(first_rows_of_each_participant[,"SS_Q_item_1"]), levels = c("very untrue", "untrue", "between true and untrue", "true", "very true")))
-# reverst scale as this question is reverse scored 
+# reverse scale as this question is reverse scored 
 first_rows_of_each_participant[,"SS_Q_item_1_num"] = 6 - first_rows_of_each_participant[,"SS_Q_item_1_num"]
 first_rows_of_each_participant[,"SS_Q_item_2_num"] = as.numeric(ordered(factor(first_rows_of_each_participant[,"SS_Q_item_2"]), levels = c("very untrue", "untrue", "between true and untrue", "true", "very true")))
 first_rows_of_each_participant[,"SS_Q_average_score"] = apply(cbind(first_rows_of_each_participant[,"SS_Q_item_1_num"], first_rows_of_each_participant[,"SS_Q_item_2_num"]), 1, mean)
@@ -456,7 +456,7 @@ N_table_per_lab
 ##################################################
 
 # This segment displays the results of the primary analysis and produces the figures
-# used in the paper
+# used in the paper.
 
 # proportion of successful guesses
 success_proportion = successes/total_N
@@ -488,7 +488,7 @@ cumulative_successes_trial_N_table = data.frame(cbind(cumsum(as.logical(data_BF[
 names(cumulative_successes_trial_N_table) = c("successes", "total_N")
 
 # calculating Bayes factors for each new experimental trial with all three priors
-# calcluating these takes about 3 minutes on an i7-6600 2.6GHz GPU, dependening on how many data points are there
+# Calculating these takes about 3 minutes on an i7-6600 2.6GHz GPU, depending on how many data points are there.
 BF_replication_cumulative <- apply(cumulative_successes_trial_N_table, 1, function(x) BF01_beta(y = x["successes"], N = x["total_N"], y_prior = y_prior, N_prior = N_prior, interval = c(0.5,1), null_prob = M0_prob)) 
 BF_uniform_cumulative <- apply(cumulative_successes_trial_N_table, 1, function(x) BF01_beta(y = x["successes"], N = x["total_N"], y_prior = 0, N_prior = 0, interval = c(0.5,1), null_prob = M0_prob)) 
 BF_BUJ_cumulative <- apply(cumulative_successes_trial_N_table, 1, function(x) BF01_beta(y = x["successes"], N = x["total_N"], y_prior = 6, N_prior = 12, interval = c(0.5,1), null_prob = M0_prob))
@@ -512,7 +512,7 @@ fig_1_plotdata_full[,"BF_value"] = as.numeric(as.character(fig_1_plotdata_full[,
 BF_table = results_table[,c("BF_replication", "BF_uniform", "BF_BUJ", "checked_at")]
 BF_table_melted = melt(BF_table[nrow(BF_table),], id=c("checked_at"))
 
-# generate figure 1
+# Generate figure 1.
 figure_1 <- ggplot(fig_1_plotdata_full, aes(y = BF_value, x = total_N, group = BF_type))+
   geom_line(aes(linetype = BF_type), size = 1.2)+
   scale_linetype_manual(name="Prior", labels=c("BUJ","Replication","Uniform"), values=c("solid", "dashed", "twodash"))+
@@ -537,7 +537,7 @@ figure_1 <- ggplot(fig_1_plotdata_full, aes(y = BF_value, x = total_N, group = B
 # but this is not important so we suppress it
 suppressWarnings(print(figure_1))
 
-# save high resolution figure
+# Save high resolution figure.
 # jpeg("C:\\Users\\User\\Documents\\figure_1.jpg", units="in", width=8, height=5, res=300)
 # figure_1
 # dev.off()
@@ -551,8 +551,8 @@ suppressWarnings(print(figure_1))
 #    Robustness test of primary analysis result with NHST        #
 #================================================================#
 
-# robustness of the primary analysis result is tested with NHST proportion tests
-# here we perform both an equivalence test and an equality test to draw statistical inference
+# Robustness of the primary analysis result is tested with NHST proportion tests.
+# Here we perform both an equivalence test and an equality test to draw statistical inference.
 
 # equivalence test
 equivalence_test_p = prop.test(x = successes, n = total_N,p = M0_prob+minimum_effect_threshold_NHST, alternative = "less")$p.value
@@ -570,13 +570,13 @@ if(Inference_threshold_NHST > equivalence_test_p){inference_robustness_NHST = "M
 # Robustness test of primary analysis result with Bayesian parameter estimation  #
 #================================================================================#
 
-# robustness of primary analysis result is tested by calculating HDI of the posterior 
+# Robustness of primary analysis result is tested by calculating HDI of the posterior 
 # distribution and checking its relation to
 # the region of practical equivalence (ROPE), promoted in Kruschke, J. K., & Liddell, T. M. 
 # (2017). The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power 
 # analysis from a Bayesian perspective. Psychonomic Bulletin & Review, 1-29. 
 
-# calculate posterior distribution using beta distribution updating
+# Calculate posterior distribution using beta distribution updating.
 prior_alpha = y_prior + 1
 prior_beta = N_prior-y_prior+1
 
@@ -586,10 +586,10 @@ posterior_beta = prior_beta + total_N - successes
 scale = seq(0, 1, length = 10001)
 posterior_density = dbeta(scale, posterior_alpha, posterior_beta)
 
-# calculate HDI for the posterior distribution
+# Calculate HDI for the posterior distribution
 # (here we calculate the upper and lower bound of the 90% of the probability mass
 # because we use a one-tailed test. This means that the total probability mass below
-# the upper bound of the 90% HDI will be 95%)
+# the upper bound of the 90% HDI will be 95%).
 hdi_result = mode_HDI(scale = scale, density = posterior_density, crit_width = 1-Inference_threshold_robustness_Bayes_Par_Est*2, n_samples = 1e6)
 
 # parameters for decision making
@@ -608,7 +608,7 @@ Probability_parameter_higher_than_ROPE = sum(posterior_density[scale>ROPE])/sum(
 ## Figure 2
 # Figure 2 displays the Confidence interval computed based on the 
 # final mixed model primary analysis and the posterior distribution of the 
-# parameter based on the Bayesian Parameter Estimation
+# parameter based on the Bayesian Parameter Estimation.
 
 fig_2_sample <- as.data.frame(sample(x = scale, size = 1000000, replace = TRUE, prob = posterior_density))
 names(fig_2_sample) = "value"
@@ -663,7 +663,7 @@ figure_2
 
 ### The above figure was planned in the preregistered code, but we decided to
 ### include a slightly modified version of the figure into the final paper
-### for more clarity
+### for more clarity.
 
 figure_2_new = figure_2_pre + 
   geom_area(data = subset(fig_2_plotdata, x >= hdi_result[2] & x <= hdi_result[3]), aes(x=x, y=y), fill="light gray")+
@@ -693,7 +693,7 @@ figure_2_new = figure_2_pre +
         axis.title = element_text(size = 16))
 figure_2_new
 
-# save high resolution figure
+# Save high resolution figure.
 # jpeg("C:\\Users\\User\\Documents\\figure_2.jpg", units="in", width=8, height=5, res=300)
 # figure_2_new
 # dev.off()
@@ -702,8 +702,8 @@ figure_2_new
 #      Determine final inference of all robustness tests combined       #
 #=======================================================================#
 
-# the main analysis inference is only robust if all robustness tests came to the same 
-# inference as the final inference of the primary analysis
+# The main analysis inference is only robust if all robustness tests came to the same 
+# inference as the final inference of the primary analysis.
 inferences = c(inference_robustness_NHST, inference_robustness_Bayes_Par_Est)
 inference_robustness = if(all(inferences == inferences[1])){inferences[1]} else {"mixed"}
 Robust = if(primary_analysis_inference == "Inconclusive"){"NA, main inference inconclusive"
@@ -727,19 +727,19 @@ Robust
 # successful guess rate in the population, by contrasting it to a theoretical
 # distribution expected if the true successful guess chance is homogeneously
 # 50% in the population. This may provide information for future research on
-# potential irregulities in the distribution of guess rates.
+# potential irregularities in the distribution of guess rates.
 
 # calculate proportion of successful guesses for each participant in the observed data who finished all 18 erotic trials
 data_BF_split_finishedalltrials = data_BF_split[which(sapply(data_BF_split, nrow) == 18)]
 success_proportions_empirical_finishedalltrials = sapply(data_BF_split_finishedalltrials, function(x) mean(as.logical(x[,"sides_match"])))
 
-# samples 1,000,000 participants from a population with a 50% successfull guess chance
-# homogeneous in the population
-# we call this the theoretical sample, because it approximates the theoretical null model
+# Samples 1,000,000 participants from a population with a 50% successfull guess chance
+# homogeneous in the population.
+# We call this the theoretical sample, because it approximates the theoretical null model.
 sim_null_participant_num = 1000000
 success_proportions_theoretical <- rbinom(sim_null_participant_num, size = erotic_trial_size_per_participant, prob=M0_prob)/erotic_trial_size_per_participant
 
-# determine possible values of success rates
+# Determine possible values of success rates.
 possible_success_rates = 0
 for(i in 1:erotic_trial_size_per_participant){
   possible_success_rates[i+1] = round(1/(erotic_trial_size_per_participant/i), 2)
@@ -748,14 +748,14 @@ possible_success_rates_char = as.character(possible_success_rates)
 success_proportions_theoretical_char_rounded = as.character(round(success_proportions_theoretical, 2))
 success_proportions_empirical_finishedalltrials_char_rounded = as.character(round(success_proportions_empirical_finishedalltrials, 2))
 
-# determine the distribution in the theoretical sample
+# Determine the distribution in the theoretical sample.
 success_rates_theoretical = NA
 for(i in 1:length(possible_success_rates)){
   success_rates_theoretical[i] = sum(success_proportions_theoretical_char_rounded == possible_success_rates_char[i])
 }
 success_rates_theoretical_prop = matrix(success_rates_theoretical/sum(success_rates_theoretical))
 
-# determine the distribution in the empirical sample 
+# Determine the distribution in the empirical sample. 
 success_rates_empirical = NA
 for(i in 1:length(possible_success_rates)){
   success_rates_empirical[i] = sum(success_proportions_empirical_finishedalltrials_char_rounded == possible_success_rates_char[i])
@@ -764,7 +764,7 @@ success_rates_empirical_prop = matrix(success_rates_empirical/sum(success_rates_
 
 
 
-# Display the two distributions overlayed on Figure 3
+# Display the two distributions overlayed on Figure 3.
 fig_3_histogram_plot_data = as.data.frame(c(success_rates_theoretical_prop, success_rates_empirical_prop))
 fig_3_histogram_plot_data = cbind(fig_3_histogram_plot_data, factor(c(rep("Expected if M0 is true", length(success_rates_theoretical_prop)), rep("Observed", length(success_rates_empirical_prop)))))
 fig_3_histogram_plot_data = cbind(fig_3_histogram_plot_data, factor(rep(possible_success_rates_char, 2)))
@@ -786,7 +786,7 @@ figure_3 =  ggplot(fig_3_histogram_plot_data, aes(y = proportion, x = success, g
         axis.title = element_text(size = 16))
 figure_3
 
-# save high resolution figure
+# Save high resolution figure.
 # jpeg("C:\\Users\\User\\Documents\\figure_3.jpg", units="in", width=7, height=5, res=300)
 # figure_3
 # dev.off()
@@ -809,10 +809,10 @@ success_rate_didnotfinishalltrials_SE = sd(success_proportions_empirical_didnotf
 success_rate_didnotfinishalltrials_CI_lb = mean_success_rate_didnotfinishalltrials - 1.96*success_rate_didnotfinishalltrials_SE
 success_rate_didnotfinishalltrials_CI_ub = mean_success_rate_didnotfinishalltrials + 1.96*success_rate_didnotfinishalltrials_SE
 
-# Repeating main analysis with only those who finished all 18 erotic trials
+# Repeating main analysis with only those who finished all 18 erotic trials.
 # This was done because the research auditors noted that there were a few reports
 # of software crashes during the experiments, so we wanted to see the impact of
-# excluding these unfinished sessions on our conclusions
+# excluding these unfinished sessions on our conclusions.
 
 data_BF_finishedalltrials_for_analysis = do.call("rbind", data_BF_split_finishedalltrials)
 
@@ -843,8 +843,8 @@ BF_BUJ_finishedalltrials <- BF01_beta(y = successes_finishedalltrials, N = total
 #                     Assessing Sheep-Goat theory                       #
 #=======================================================================#
 
-### This section contains different exploratory analyses to assess the data in light of the Sheep-Goat theory
-### Which claims that some individuals consistently perform better than expected by chance and some are perform 
+### This section contains different exploratory analyses to assess the data in light of the Sheep-Goat theory,
+### which claims that some individuals participants perform better than expected by chance and some perform 
 ### consistently worse than expected by chance in ESP studies, and that their performance relates to belief in ESP.
 
 ### If the Sheep-Goat theory is correct, the success rate within individuals in odd trials should be correlated
@@ -870,9 +870,9 @@ sheepgoat_success_table %>%
   geom_point() +
   geom_smooth()
 
-### the code below contains some more investigation of the potential relationship between
-### belief in ESP (by participant and by the experimenters or site-PI) and performance
-### no indication of a relationship was found in these analyses
+### The code below contains some more investigation of the potential relationship between
+### belief in ESP (by participant and by the experimenters or site-PI) and performance.
+### No indication of a relationship was found in these analyses.
 
 sheepgoat_belief_table = data.frame(matrix(NA, nrow = length(data_BF_split_finishedalltrials), ncol = 8))
 names(sheepgoat_belief_table) = c("hitrate", "hitnum", "ESP_Q_item_1", "ESP_Q_item_1_num", "experimenter_ID_code", "experimenter_ASGS_total_score", "laboratory_ID_code", "sitePI_ASGS_total_score")
